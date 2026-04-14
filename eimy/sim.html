@@ -1,1 +1,307 @@
 
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>商品マッピング</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.2.min.js"></script>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Yu Gothic", sans-serif;
+      background: #fafafa;
+      color: #222;
+    }
+    .wrap {
+      display: grid;
+      grid-template-columns: 1.5fr 0.95fr;
+      gap: 16px;
+      padding: 16px;
+      height: 100vh;
+      box-sizing: border-box;
+    }
+    .card {
+      background: #fff;
+      border: 1px solid #e5e5e5;
+      border-radius: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+      overflow: hidden;
+    }
+    #plot {
+      width: 100%;
+      height: calc(100vh - 32px);
+    }
+    .side {
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      height: calc(100vh - 32px);
+      box-sizing: border-box;
+    }
+    .title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+    .hint {
+      color: #666;
+      font-size: 13px;
+      line-height: 1.5;
+    }
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      margin-bottom: 4px;
+    }
+    .toolbar select {
+      border: 1px solid #ddd;
+      background: #fff;
+      border-radius: 10px;
+      padding: 8px 10px;
+      font-size: 14px;
+    }
+    .meta {
+      display: grid;
+      grid-template-columns: 100px 1fr;
+      gap: 8px 12px;
+      font-size: 14px;
+      line-height: 1.5;
+    }
+    .label {
+      color: #666;
+    }
+    .badge {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #f0f0f0;
+      font-size: 12px;
+    }
+    .image-box {
+      flex: 1;
+      min-height: 320px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f6f6f6;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #eee;
+    }
+    .image-box img {
+      max-width: 100%;
+      max-height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <div id="plot"></div>
+    </div>
+    <div class="card side">
+      <div>
+        <div class="title">商品マッピング</div>
+        <div class="hint">点をホバーまたはクリックすると、右側に商品画像と詳細を表示します。</div>
+      </div>
+
+      <div class="toolbar">
+        <label for="categoryFilter" class="hint">カテゴリ</label>
+        <select id="categoryFilter">
+          <option value="__ALL__">すべて</option>
+        </select>
+      </div>
+
+      <div class="meta">
+        <div class="label">ブランド</div><div id="meta-brand">-</div>
+        <div class="label">商品名</div><div id="meta-name">-</div>
+        <div class="label">商品ID</div><div id="meta-id">-</div>
+        <div class="label">カテゴリ</div><div id="meta-category">-</div>
+        <div class="label">類似度</div><div id="meta-sim">-</div>
+        <div class="label">適合度</div><div id="meta-fit">-</div>
+        <div class="label">象限</div><div id="meta-quadrant">-</div>
+      </div>
+
+      <div class="image-box">
+        <img id="preview" alt="商品画像" />
+      </div>
+    </div>
+  </div>
+
+<script>
+const rawData = [{"商品ID": "1", "商品名": "ドレープネックオフショルカットソー／ウォッシャブル", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.9642857142857143, "適合度": 0.1828584642256776, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/827/104488827/104488827_1_d_500.jpg", "類似度_raw": 0.851212490599013, "適合度_raw": 0.0091046759739461}, {"商品ID": "2", "商品名": "ニットコンビペプラムトップス", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.7142857142857143, "適合度": 0.8137708597376883, "象限": "高類似 × 高適合", "画像URL": "https://c.imgz.jp/376/103122376/103122376b_1_d_500.jpg", "類似度_raw": 0.8096508371192592, "適合度_raw": 0.0292040818429789}, {"商品ID": "3", "商品名": "アイレットシアーポロニット", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.14285714285714285, "適合度": 0.6742952591477435, "象限": "低類似 × 低適合", "画像URL": "https://c.imgz.jp/081/97494081/97494081b_38_d_500.jpg", "類似度_raw": 0.7761141459737868, "適合度_raw": 0.0775850635401193}, {"商品ID": "4", "商品名": "2wayリボントップス", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.6428571428571429, "適合度": 0.8292749852034755, "象限": "高類似 × 高適合", "画像URL": "https://c.imgz.jp/753/93418753/93418753b_1_d_215.jpg", "類似度_raw": 0.8071078774056527, "適合度_raw": 0.0311873735277901}, {"商品ID": "5", "商品名": "【WEB限定】オフショルパフスリーブブラウス／ウォッシャブル", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.6785714285714286, "適合度": 0.8266356543872971, "象限": "高類似 × 高適合", "画像URL": "https://c.imgz.jp/763/104526763/104526763b_8_d_215.jpg", "類似度_raw": 0.8076196750478427, "適合度_raw": 0.0307792727537053}, {"商品ID": "6", "商品名": "シルクコットンクロップドリブニットカーディガン", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.8214285714285714, "適合度": 0.7014774051044468, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/377/103122377/103122377b_8_d_215.jpg", "類似度_raw": 0.8196494703660866, "適合度_raw": 0.0224141959534355}, {"商品ID": "7", "商品名": "ギャザーオフショルカットソー", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.2857142857142857, "適合度": 0.8804882805754175, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/022/103741022/103741022b_18_d_215.jpg", "類似度_raw": 0.7872468938077952, "適合度_raw": 0.0599464010958819}, {"商品ID": "8", "商品名": "【LUMISHADE】ジップパーカー／UVカット・ウォッシャブル", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.5, "適合度": 1.0, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/189/104807189/104807189b_8_d_215.jpg", "類似度_raw": 0.8017952937708119, "適合度_raw": 0.042001770859908}, {"商品ID": "9", "商品名": "アシメペプラムチュニック", "ブランド": "FRAY I.D", "カテゴリ": "tops", "類似度": 0.5357142857142857, "適合度": 0.841775512375381, "象限": "高類似 × 高適合", "画像URL": "https://c.imgz.jp/204/103704204/103704204b_33_d_215.jpg", "類似度_raw": 0.8022960014723608, "適合度_raw": 0.0352537790828947}, {"商品ID": "10", "商品名": "襟付きデザインスリーブブラウス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.75, "適合度": 0.7503635509158594, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/508/104766508/104766508b_1_d_500.jpg", "類似度_raw": 0.8160403933533238, "適合度_raw": 0.0246890988647202}, {"商品ID": "11", "商品名": "小花ジャガードペプラムブラウス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.32142857142857145, "適合度": 0.9568148236876662, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/249/104638249/104638249b_8_d_500.jpg", "類似度_raw": 0.7933179100482313, "適合度_raw": 0.0518095767473677}, {"商品ID": "12", "商品名": "【洗える】襟付きメッシュブラウス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.7857142857142857, "適合度": 0.722261806455131, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/250/104638250/104638250b_8_d_500.jpg", "類似度_raw": 0.8181866895479721, "適合度_raw": 0.0233134705089758}, {"商品ID": "13", "商品名": "【洗える】アシンメトリーカットトップス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.39285714285714285, "適合度": 0.8331430327229212, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/248/104638248/104638248b_20_d_215.jpg", "類似度_raw": 0.7978411709532386, "適合度_raw": 0.0394082052032141}, {"商品ID": "14", "商品名": "衿付きパフスリーブブラウス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.25, "適合度": 0.8352342543722404, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/205/98466205/98466205_1_d_215.jpg", "類似度_raw": 0.7844587347415817, "適合度_raw": 0.064020949398624}, {"商品ID": "15", "商品名": "襟付きデザインスリーブブラウス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.8571428571428571, "適合度": 0.3729503482025498, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/508/104766508/104766508b_3_d_215.jpg", "類似度_raw": 0.8387528932247195, "適合度_raw": 0.013148723507014}, {"商品ID": "16", "商品名": "【洗える】トリムポケットTシャツ", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.6071428571428571, "適合度": 0.9906568956780938, "象限": "高類似 × 高適合", "画像URL": "https://c.imgz.jp/245/104638245/104638245b_8_d_215.jpg", "類似度_raw": 0.8060782203540582, "適合度_raw": 0.0376733343303005}, {"商品ID": "17", "商品名": "【洗える】ペプラムシアーラメニットカーデ", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.8928571428571429, "適合度": 0.3629225231801927, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/272/104638272/104638272_20_d_215.jpg", "類似度_raw": 0.8393365451125897, "適合度_raw": 0.0129287631729808}, {"商品ID": "18", "商品名": "ラッセルレースカットトップス", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.10714285714285714, "適合度": 0.29676376174777075, "象限": "低類似 × 低適合", "画像URL": "https://c.imgz.jp/412/97703412/97703412_20_d_215.jpg", "類似度_raw": 0.7573194271702831, "適合度_raw": 0.1165928597459899}, {"商品ID": "19", "商品名": "シルクブレンドショートファースリーブニット", "ブランド": "CELFORD", "カテゴリ": "tops", "類似度": 0.5714285714285714, "適合度": 0.841710637463188, "象限": "高類似 × 高適合", "画像URL": "https://c.imgz.jp/869/96794869/96794869b_20_d_215.jpg", "類似度_raw": 0.8024865825041289, "適合度_raw": 0.0350846120865751}, {"商品ID": "20", "商品名": "【WEB限定カラーあり】ボリュームペプラムドッキングカットプルオーバー", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.35714285714285715, "適合度": 0.8185678490011445, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/699/104766699/104766699b_8_d_500.jpg", "類似度_raw": 0.7951310806534473, "適合度_raw": 0.0421305872279195}, {"商品ID": "21", "商品名": "ラッフルジャガードボリュームブラウス", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.17857142857142858, "適合度": 0.8107941012879367, "象限": "低類似 × 低適合", "画像URL": "https://c.imgz.jp/339/103006339/103006339b_8_d_500.jpg", "類似度_raw": 0.7830721342309472, "適合度_raw": 0.0661301183428578}, {"商品ID": "22", "商品名": "ルーズネックカットプルオーバー", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.9285714285714286, "適合度": 0.2273491967073413, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/426/95152426/95152426_8_d_215.jpg", "類似度_raw": 0.847925632673973, "適合度_raw": 0.0100467803427788}, {"商品ID": "23", "商品名": "【WEB限定/LUMISHADE】サンバイザー付きUVカットパーカー", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.03571428571428571, "適合度": 0.0, "象限": "低類似 × 低適合", "画像URL": "https://c.imgz.jp/126/105780126/105780126b_38_d_215.jpg", "類似度_raw": 0.7286712123383496, "適合度_raw": 0.2026712428832881}, {"商品ID": "24", "商品名": "【LUMISHADE】UVカットパーカー", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.4642857142857143, "適合度": 0.8410995470876654, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/986/105503986/105503986b_2_d_215.jpg", "類似度_raw": 0.8008473654039423, "適合度_raw": 0.0365622509366354}, {"商品ID": "25", "商品名": "【ベストセラー】ボリュームパーカー", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.07142857142857142, "適合度": 0.060312883180936354, "象限": "低類似 × 低適合", "画像URL": "https://c.imgz.jp/988/105503988/105503988b_26_d_215.jpg", "類似度_raw": 0.7385402707677782, "適合度_raw": 0.1690819644207582}, {"商品ID": "26", "商品名": "【LUMISHADE】UVポケッタブルパーカー", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.21428571428571427, "適合度": 0.6853926163626164, "象限": "低類似 × 低適合", "画像URL": "https://c.imgz.jp/602/105507602/105507602b_8_d_215.jpg", "類似度_raw": 0.7833631711709138, "適合度_raw": 0.0558303632989861}, {"商品ID": "27", "商品名": "オフショルフリルブラウス", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 0.42857142857142855, "適合度": 0.840239231343243, "象限": "低類似 × 高適合", "画像URL": "https://c.imgz.jp/936/97094936/97094936_8_d_215.jpg", "類似度_raw": 0.800260966944236, "適合度_raw": 0.0371034059763192}, {"商品ID": "28", "商品名": "Sustainableチュールペプラムブラウス", "ブランド": "SNIDEL", "カテゴリ": "tops", "類似度": 1.0, "適合度": 0.12252240347718003, "象限": "高類似 × 低適合", "画像URL": "https://c.imgz.jp/697/104766697/104766697_38_d_215.jpg", "類似度_raw": 0.8563644445409024, "適合度_raw": 0.0077856142627224}];
+const similarityThreshold = 0.51785714;
+const fitThreshold = 0.81228248;
+
+const categoryFilter = document.getElementById("categoryFilter");
+const categories = [...new Set(rawData.map(d => d["カテゴリ"]).filter(Boolean))].sort();
+for (const cat of categories) {
+  const opt = document.createElement("option");
+  opt.value = cat;
+  opt.textContent = cat;
+  categoryFilter.appendChild(opt);
+}
+
+function updateSidePanel(d) {
+  document.getElementById("meta-brand").textContent = d["ブランド"] ?? "-";
+  document.getElementById("meta-name").textContent = d["商品名"] ?? "-";
+  document.getElementById("meta-id").textContent = d["商品ID"] ?? "-";
+  document.getElementById("meta-category").textContent = d["カテゴリ"] ?? "-";
+  document.getElementById("meta-sim").textContent = Number(d["類似度"]).toFixed(3);
+  document.getElementById("meta-fit").textContent = Number(d["適合度"]).toFixed(3);
+  document.getElementById("meta-quadrant").innerHTML = `<span class="badge">${d["象限"] || "-"}</span>`;
+  document.getElementById("preview").src = d["画像URL"] || "";
+}
+
+function getFilteredData() {
+  const selected = categoryFilter.value;
+  if (selected === "__ALL__") return rawData;
+  return rawData.filter(d => d["カテゴリ"] === selected);
+}
+
+function uniqueBrands(data) {
+  return [...new Set(data.map(d => d["ブランド"]).filter(b => b && b.trim() !== ""))].sort();
+}
+
+function buildTraces(data) {
+  const brands = uniqueBrands(data);
+  const traces = [];
+
+  if (brands.length === 0) {
+    traces.push({
+      x: data.map(d => d["類似度"]),
+      y: data.map(d => d["適合度"]),
+      mode: "markers",
+      type: "scatter",
+      name: "商品",
+      text: data.map(d =>
+        `ブランド: ${d["ブランド"] || "-"}<br>` +
+        `商品名: ${d["商品名"] || "-"}<br>` +
+        `商品ID: ${d["商品ID"]}<br>` +
+        `カテゴリ: ${d["カテゴリ"] || "-"}<br>` +
+        `類似度: ${Number(d["類似度"]).toFixed(3)}<br>` +
+        `適合度: ${Number(d["適合度"]).toFixed(3)}<br>` +
+        `象限: ${d["象限"] || "-"}`
+      ),
+      customdata: data,
+      hovertemplate: "%{text}<extra></extra>",
+      marker: { size: 12, opacity: 0.88, line: {width: 0.5, color: "#ffffff"} }
+    });
+    return traces;
+  }
+
+  for (const brand of brands) {
+    const sub = data.filter(d => d["ブランド"] === brand);
+    traces.push({
+      x: sub.map(d => d["類似度"]),
+      y: sub.map(d => d["適合度"]),
+      mode: "markers",
+      type: "scatter",
+      name: brand,
+      text: sub.map(d =>
+        `ブランド: ${d["ブランド"] || "-"}<br>` +
+        `商品名: ${d["商品名"] || "-"}<br>` +
+        `商品ID: ${d["商品ID"]}<br>` +
+        `カテゴリ: ${d["カテゴリ"] || "-"}<br>` +
+        `類似度: ${Number(d["類似度"]).toFixed(3)}<br>` +
+        `適合度: ${Number(d["適合度"]).toFixed(3)}<br>` +
+        `象限: ${d["象限"] || "-"}`
+      ),
+      customdata: sub,
+      hovertemplate: "%{text}<extra></extra>",
+      marker: { size: 12, opacity: 0.88, line: {width: 0.5, color: "#ffffff"} }
+    });
+  }
+
+  return traces;
+}
+
+function renderPlot() {
+  const filtered = getFilteredData();
+  const traces = buildTraces(filtered);
+
+  const layout = {
+    margin: {l: 70, r: 20, t: 30, b: 65},
+    xaxis: {
+      title: {text: "類似度", font: {size: 18}},
+      range: [0, 1],
+      tickfont: {size: 13}
+    },
+    yaxis: {
+      title: {text: "適合度", font: {size: 18}},
+      range: [0, 1],
+      tickfont: {size: 13}
+    },
+    legend: {
+      title: {text: "ブランド"},
+      orientation: "h",
+      yanchor: "bottom",
+      y: 1.02,
+      xanchor: "left",
+      x: 0,
+      font: {size: 12}
+    },
+    shapes: [
+      {
+        type: "line",
+        x0: similarityThreshold, x1: similarityThreshold,
+        y0: 0, y1: 1,
+        line: {dash: "dash", width: 1}
+      },
+      {
+        type: "line",
+        x0: 0, x1: 1,
+        y0: fitThreshold, y1: fitThreshold,
+        line: {dash: "dash", width: 1}
+      }
+    ],
+    annotations: [
+      {
+        x: 0.98, y: 0.98, xref: "paper", yref: "paper",
+        text: "<b>高類似 × 高適合</b>", showarrow: false,
+        xanchor: "right", yanchor: "top",
+        font: {size: 20}
+      },
+      {
+        x: 0.02, y: 0.98, xref: "paper", yref: "paper",
+        text: "<b>低類似 × 高適合</b>", showarrow: false,
+        xanchor: "left", yanchor: "top",
+        font: {size: 20}
+      },
+      {
+        x: 0.98, y: 0.02, xref: "paper", yref: "paper",
+        text: "<b>高類似 × 低適合</b>", showarrow: false,
+        xanchor: "right", yanchor: "bottom",
+        font: {size: 20}
+      },
+      {
+        x: 0.02, y: 0.02, xref: "paper", yref: "paper",
+        text: "<b>低類似 × 低適合</b>", showarrow: false,
+        xanchor: "left", yanchor: "bottom",
+        font: {size: 20}
+      }
+    ]
+  };
+
+  Plotly.newPlot("plot", traces, layout, {responsive: true, displaylogo: false});
+
+  const plot = document.getElementById("plot");
+  plot.on("plotly_hover", (ev) => updateSidePanel(ev.points[0].customdata));
+  plot.on("plotly_click", (ev) => updateSidePanel(ev.points[0].customdata));
+
+  if (filtered.length > 0) {
+    updateSidePanel(filtered[0]);
+  }
+}
+
+categoryFilter.addEventListener("change", renderPlot);
+renderPlot();
+</script>
+</body>
+</html>
